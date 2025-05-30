@@ -41,4 +41,4 @@ jobs:
       - name: Semgrep SAST
         uses: returntocorp/semgrep-action@v1
         with:
-          config: r2c-ci
+          config: owasp-top-ten
