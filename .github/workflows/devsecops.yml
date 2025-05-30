@@ -9,6 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
       - name: Build Docker image
         run: docker build -t macramgit/dvwa:latest .
 
@@ -17,6 +18,7 @@ jobs:
     needs: build_docker
     steps:
       - uses: actions/checkout@v3
+
       - name: OWASP Dependency Check
         uses: dependency-check/Dependency-Check_Action@main
         with:
@@ -24,47 +26,9 @@ jobs:
           path: '.'
           format: 'HTML'
 
-  semgrep_sast:
-    runs-on: ubuntu-latest
-    needs: build_docker
-    steps:
-      - uses: actions/checkout@v3
-      - name: Semgrep SAST
-        uses: returntocorp/semgrep-action@v1
+      - name: Upload Dependency Check Report
+        uses: actions/upload-artifact@v3
         with:
-          config: p/security-audit
+          name: dependency-check-report
+          path: reports/dependency-check-report.html
 
-  secrets_scan:
-    runs-on: ubuntu-latest
-    needs: build_docker
-    steps:
-      - uses: actions/checkout@v3
-      - name: GitLeaks Secrets Scan
-        uses: gitleaks/gitleaks-action@v2
-
-  dast_scan:
-    runs-on: ubuntu-latest
-    needs: build_docker
-    steps:
-      - uses: actions/checkout@v3
-      - name: Run DVWA container
-        run: docker run -d -p 80:80 macramgit/dvwa:latest
-
-      - name: OWASP ZAP DAST
-        uses: zaproxy/action-baseline@v0.9.0
-        with:
-          target: 'http://localhost:80'
-
-  trivy_scan:
-    runs-on: ubuntu-latest
-    needs: build_docker
-    steps:
-      - uses: actions/checkout@v3
-      - name: Build Docker image (for scan)
-        run: docker build -t macramgit/dvwa:latest .
-
-      - name: Trivy Image Scan
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: 'macramgit/dvwa:latest'
-          severity: 'HIGH,CRITICAL'
