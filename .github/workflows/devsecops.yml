@@ -1,4 +1,4 @@
-name: DevSecOps Pipeline
+kname: DevSecOps Pipeline
 
 on:
   push:
@@ -9,8 +9,67 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-
       - name: Build Docker image
+        run: docker build -t macramgit/dvwa:latest .
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Push Docker image
+        run: docker push macramgit/dvwa:latest
+
+  dependency_check:
+    runs-on: ubuntu-latest
+    needs: build_docker
+    steps:
+      - uses: actions/checkout@v3
+      - name: OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'DVWA'
+          path: '.'
+          format: 'HTML'
+
+  semgrep_sast:
+    runs-on: ubuntu-latest
+    needs: build_docker
+    steps:
+      - uses: actions/checkout@v3
+      - name: Semgrep SAST
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: p/security-audit
+
+  secrets_scan:
+    runs-on: ubuntu-latest
+    needs: build_docker
+    steps:
+      - uses: actions/checkout@v3
+      - name: GitLeaks Secrets Scan
+        uses: gitleaks/gitleaks-action@v2
+
+  dast_scan:
+    runs-on: ubuntu-latest
+    needs: build_docker
+    steps:
+      - uses: actions/checkout@v3
+      - name: Run DVWA container
+        run: docker run -d -p 80:80 macramgit/dvwa:latest
+
+      - name: OWASP ZAP DAST
+        uses: zaproxy/action-baseline@v0.9.0
+        with:
+          target: 'http://localhost:80'
+
+  trivy_scan:
+    runs-on: ubuntu-latest
+    needs: build_docker
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build Docker image (for scan)
         run: docker build -t macramgit/dvwa:latest .
 
       - name: Trivy Image Scan
@@ -18,3 +77,4 @@ jobs:
         with:
           image-ref: 'macramgit/dvwa:latest'
           severity: 'HIGH,CRITICAL'
+
