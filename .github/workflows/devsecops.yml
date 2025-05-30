@@ -32,3 +32,13 @@ jobs:
           name: dependency-check-report
           path: reports/dependency-check-report.html
 
+  semgrep_sast:
+    runs-on: ubuntu-latest
+    needs: build_docker
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Semgrep SAST
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: p/security-audit
