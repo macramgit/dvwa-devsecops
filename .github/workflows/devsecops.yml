@@ -38,7 +38,9 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Semgrep SAST
+      - name: Semgrep SAST (PHP + OWASP)
         uses: returntocorp/semgrep-action@v1
         with:
-          config: owasp-top-ten
+          config: >-
+            p/php
+            p/owasp-top-ten
