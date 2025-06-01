@@ -19,13 +19,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install PHP dependencies
-        run: |
-          sudo apt update
-          sudo apt install -y php-cli unzip curl
-          curl -sS https://getcomposer.org/installer | php
-          php composer.phar install
-
       - name: OWASP Dependency Check
         uses: dependency-check/Dependency-Check_Action@main
         with:
@@ -33,22 +26,22 @@ jobs:
           path: '.'
           format: 'HTML'
 
-      - name: Upload Dependency Check Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: dependency-check-report
-          path: reports/dependency-check-report.html
-
   semgrep_sast:
     runs-on: ubuntu-latest
     needs: build_docker
     steps:
       - uses: actions/checkout@v3
 
-      - name: Semgrep SAST (PHP + OWASP)
+      - name: Semgrep SAST
         uses: returntocorp/semgrep-action@v1
         with:
-          config: >-
-            p/php
-            p/owasp-top-ten
+          config: p/php p/owasp-top-ten
 
+  secrets_scan:
+    runs-on: ubuntu-latest
+    needs: build_docker
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: GitLeaks Secrets Scan
+        uses: gitleaks/gitleaks-action@v2
