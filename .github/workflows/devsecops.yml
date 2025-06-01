@@ -19,6 +19,13 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Install PHP dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y php-cli unzip curl
+          curl -sS https://getcomposer.org/installer | php
+          php composer.phar install
+
       - name: OWASP Dependency Check
         uses: dependency-check/Dependency-Check_Action@main
         with:
@@ -44,3 +51,4 @@ jobs:
           config: >-
             p/php
             p/owasp-top-ten
+
